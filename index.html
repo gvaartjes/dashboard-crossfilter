@@ -1,0 +1,50 @@
+<html>
+
+<head>
+  <title>Highcharts</title>
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script type="application/json" src=/js/inc5000-2018.json> </script> </head>
+    <body>
+  <h1>Highcharts</h1>
+  <div id="container">
+    <div id="map"></div>
+    <div>
+      <input type="radio" id="count" name="selector" value="count"
+             checked>
+      <label for="rev">Number of companies</label>
+    </div>
+    <div>
+      <input type="radio" id="revenue" name="selector" value="revenue">
+      <label for="rev">Revenue</label>
+    </div>
+    <div>
+      <input type="radio" id="growth" name="selector" value="growth">
+      <label for="growth">Growth</label>
+    </div>  
+    <div id="column"></div>
+  </div>
+  
+  <input type=text id="myText1">
+<input type=text id="myText2">
+<div>
+    <input type="range" id="start" name="volume"
+    min="0" max="100" value="90">
+    <label for="volume">Volume</label>
+  </div>  
+  <div>
+    <input type="range" id="cowbell" name="cowbell" 
+           min="0" max="100" value="90" >
+    <label for="cowbell">Cowbell</label>
+  </div>
+<span type=text id="myDomElement"></span>
+
+  <script src="/js/index.js"></script>
+  <script type="application/javascript" src="https://code.highcharts.com/7/highcharts.js"></script>
+  <script type="application/javascript" src="https://code.highcharts.com/maps/7/modules/map.js"></script>
+  <script src="https://code.highcharts.com/mapdata/countries/us/us-all.js"></script>
+
+
+  </body>
+
+</html>
