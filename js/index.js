@@ -90,30 +90,31 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     let self = this;
     let model = {};
     let bindings = [];
-    let filters = [];
-    let value; 
+    let views = [];
+    // The current data, held in value
+    let value;
+    // so we can revert back to original data
     let baseData = data;
 
     this.setter = function (val) {
+      // if exists, first apply filter
+      val = model.filter ? update([model.filter], val): val;
       // update bindings; TODO: is it setting also the element that triggert the update?
       bindings.forEach((b) => { 
         // if supplied run callback on val parameter
         let v = b.callback ? b.callback(val) : val;
-        console.log('update element with ' + v);
         b.elem[b.prop] = v;
       });
       value = val;
     }
   
     this.getter = function () {
+      console.log('this', this, this.filter)
       return value;
     }
 
-    /**
-     * Apply all filters on the base-data
-     */
-    this.applyFilters = function() {
-      value = update(filters, baseData);
+    model.getFilter = function () {
+      return this.filter;
     }
   
     Object.defineProperty(model, 'data', {
@@ -132,9 +133,14 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       return this;
     }
 
-    model.addFilter = function(filter) {
-      filters.push(filter);
-      self.applyFilters(); 
+    model.addView = function (datasource) {
+      views.push(datasource);
+    }
+
+    model.addFilter = function (filter) {
+      this.filter = filter;
+      // force setting data, with base data
+      self.setter(baseData)
     }
 
     model['data'] = data;
@@ -170,9 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let stateIsIl = matches('state_s', 'IL');
     let stateIsWI = matches('state_s', 'WI');
     let wiOrIl = or(stateIsIl,stateIsWI);
-    // ds.addFilter(wiOrIl); BOTH WORK, add filter or direct setting ds.data
-     ds.data = update([wiOrIl], ds.data);
-    
+    ds.addFilter(wiOrIl); //BOTH WORK, add filter or direct setting ds.data
+    //ds.data = update([wiOrIl], ds.data);
+    console.log('added filter')
     //console.log(ds.data);
 
     //let groupByState = groupBy(ds.data, 'state_s', 'revenue');
