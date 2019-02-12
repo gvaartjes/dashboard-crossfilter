@@ -94,6 +94,7 @@ function Datasource(data) {
   let model = {};
   let bindings = [];
   let views = [];
+  let vizs = [];
   // The current data, held in value
   let value;
   // so we can revert back to original data
@@ -104,6 +105,7 @@ function Datasource(data) {
     val = model.filter ? update([model.filter], val) : val;
     // apply group by a field 
     val = model.group ? model.group(val) : val;
+
     // update bindings; 
     //TODO: is it setting also the element that triggert the update?
     bindings.forEach((b) => {
@@ -111,9 +113,11 @@ function Datasource(data) {
       let v = b.callback ? b.callback(val) : val;
       b.elem[b.prop] = v;
     });
-    
+
     // update views with new data
-    views.forEach((view)=> view.data = val);
+    views.forEach((view) => view.data = val);
+
+    vizs.forEach((viz) => viz(val))
 
     value = val;
   }
@@ -132,15 +136,23 @@ function Datasource(data) {
     return this.filter;
   }
 
+  model.getGroup = function () {
+    return this.group;
+  }
+
   // TODO: if prop isn't set then apply callback
+  // TODO: unused method in demo
   model.addBinding = function (element, prop, eventType, callback) {
     element.addEventListener(eventType, function () {
-      console.log(element[prop])
       self.setter(element[prop])
     })
     bindings.push({ elem: element, prop: prop, callback: callback });
     element[prop] = value;
     return this;
+  }
+
+  model.bindViz = function (updateViz) {
+    vizs.push(updateViz);
   }
 
   model.addView = function (datasource) {
@@ -167,62 +179,54 @@ function Datasource(data) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  document.querySelectorAll('input[type=radio]').forEach(
-    (x) => x.addEventListener('click', (e) => console.log(e))
-  );
-
+  /**
+   * Function for setting up the dashboard with the data passed in
+   * @param {*} data 
+   */
   const setupDataViz = (data) => {
-    console.log('hi')
-    console.log(data.length, data);
-    console.log(data[2]);
 
     let ds = new Datasource(data);
 
-    let stateIsIl = matches('state_s', 'IL');
-    let stateIsWI = matches('state_s', 'WI');
-    let wiOrIl = or(stateIsIl, stateIsWI);
+    //let stateIsIl = matches('state_s', 'IL');
+    //let stateIsWI = matches('state_s', 'WI');
+    //let wiOrIl = or(stateIsIl, stateIsWI);
 
-    //let mapData = new Datasource(ds.data);
-    //mapData.setFilter(wiOrIl);
-    //mapData.setGrouping(groupBy('state_s', 'growth'))
     let mapData = new Datasource(ds.data)
-      .setFilter(wiOrIl)
+      //.setFilter(wiOrIl)
       .setGrouping(groupBy('state_s', 'growth'));
-
-    //mapData.addBinding() // add chart, so chart updates on data change
-
     ds.addView(mapData);
-    ds.setFilter(stateIsWI);
-    //ds.setFilter(wiOrIl); //BOTH WORK, add filter or direct setting ds.data
-    //ds.data = update([wiOrIl], ds.data);
-    //console.log('added filter')
-    //console.log(ds.data);
+    //ds.setFilter(stateIsWI);
 
-    //let groupByState = groupBy(ds.data, 'state_s', 'revenue');
-    //let groupByState = groupBy(ds.data, 'state_s');
-    //let groupByState = groupBy(mapData.data, 'state_s'); // move groupby function 
-    
-    //let groupByState = groupBy('state_s'); 
-    //let groupByStateData = groupByState(mapData.data);
-
-
-    // function setting series.setData
     let groupByIndustry = groupBy('industry');
-    let groupByIndustryData = groupByIndustry(ds.data);
+    let industryData = new Datasource(ds.data)
+      .setGrouping(groupByIndustry);
+    // function setting series.setData
+    ds.addView(industryData);
+    //let groupByIndustryData = groupByIndustry(ds.data);
+    //ds.setGrouping(groupByIndustry);
 
-    //let mapDataByState = toHighmapsFormat(groupByStateData)
     let mapDataByState = toHighmapsFormat(mapData.data);
 
-    console.log(mapDataByState);
-    //let groupByIndustry = groupBy(data,'industry', 'revenue');
-    console.log(groupByIndustry);
+    // console.log(mapDataByState);
+    // let groupByIndustry = groupBy(data,'industry', 'revenue');
+    // console.log(groupByIndustry);
     // built industry predicate first
 
-    let softwarePred = matches('industry', 'Software');
-    let statePred = matches('state_l', 'Wisconsin');
-    let softwareInWisconsin = and(softwarePred, statePred);
+    // set toggle for the group by
+    // TODO: these are removed when we do a map point select?
+    document.querySelectorAll('input[type=radio]').forEach(
+      (x) => x.addEventListener('change', (e) => {
+        let groupingMap = groupBy('state_s', e.target.value === 'count' ? undefined : e.target.value)
+        mapData.setGrouping(groupingMap);
+        
+        let groupingIndustry = groupBy('industry', e.target.value === 'count' ? undefined : e.target.value)
+        industryData.setGrouping(groupingIndustry);
+      }));
 
-    console.log(data.filter(softwareInWisconsin));
+    //let softwarePred = matches('industry', 'Software');
+    //let statePred = matches('state_l', 'Wisconsin');
+    //let softwareInWisconsin = and(softwarePred, statePred);
+    //console.log(data.filter(softwareInWisconsin));
 
     // column chart
     let categories = Highcharts.chart('column', {
@@ -230,11 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
         text: 'Industries'
       },
       xAxis: {
-        categories: Object.keys(groupByIndustryData)
+        categories: Object.keys(industryData.data)
       },
       series: [{
         type: 'column',
-        data: Object.values(groupByIndustryData)
+        data: Object.values(industryData.data)
       }]
     })
     // map
@@ -280,8 +284,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       series: [
         {
-          //data: [['us-wi',2]],
-          //data: [{code:'WI',value: 2}],
+          allowPointSelect: true,
+          point: {
+            events: {
+              select: function () {
+                console.log(this,  'was last selected');
+                let stateFilter = matches('state_s', this["hc-key"]);
+                //industryData.setFilter(stateFilter);
+                debugger
+                ds.setFilter(stateFilter);
+              }
+            }
+          },
           data: mapDataByState,
           joinBy: ['postal-code', 'hc-key'], // should be otherway around
           name: "USA",
@@ -330,6 +344,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }]
       }
     });
+
+    // bind charts, works only with one series per chart and one
+    // bind map
+    mapData.bindViz((d) => map.series[0].setData(toHighmapsFormat(d)));
+    // bind industry column chart
+    industryData.bindViz((d) => {
+      categories.axes[0].setCategories(Object.keys(d))
+      categories.series[0].setData(Object.values(d));
+    })
 
   } // setupDataViz
 
