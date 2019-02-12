@@ -30,12 +30,6 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   const or = (f1, f2) => (x) => f1(x) || f2(x);
 
-  // Array.map([0,1,2], (x) => x * 2)
-  // Array['map']([0,1,2], (x) => x * 2)
-  // const gt
-  // Array['filter']([0,1,2], gt2)
-
-
   let gt4 = gt(4)
   let between4and8 = between(4, 8)
 
@@ -63,19 +57,6 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
    * @param {String} sumProp - prop to summarize values for, if not provided 
    *         this works as a count
    */
-
-  /*const groupBy = (arr, prop, sumProp) => { // chnage this to return function that 
-    //groups per industy which can be fired upon an array. Later to be concatenated 
-    // with something that the prop that needs to be summed. Like revenue.
-    // select (count(x), sum(x.revenue)) from data group by x.industry 
-    let obj = {}
-    arr.forEach((x) => {
-      let v = x[prop]; 
-      let s = x[sumProp] || 1; 
-      v && obj[v] ? obj[v] = obj[v] + s : obj[v] = s;
-    });
-    return obj;
-  }*/
 
   const groupBy = (arr, prop, sumProp) => { // chnage this to return function that 
     //groups per industy which can be fired upon an array. Later to be concatenated 
@@ -109,14 +90,9 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     let self = this;
     let model = {};
     let bindings = [];
-    let charts = []; 
     let filters = [];
     let value; 
     let baseData = data;
-  
-
-    // charts.push({chart: chart, filters: [filter1, filter2]}) // Highhcarts 
-    // setdata with filters and apply to chart, based upon baseData
 
     this.setter = function (val) {
       // update bindings; TODO: is it setting also the element that triggert the update?
@@ -126,10 +102,6 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         console.log('update element with ' + v);
         b.elem[b.prop] = v;
       });
-
-      charts.forEach((c) =>{
-        console.log('update chart', c.chart);
-      })
       value = val;
     }
   
@@ -165,10 +137,6 @@ let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       self.applyFilters(); 
     }
 
-    model.bindChart = function (chart, callback) {
-      charts.push({ chart: chart, cb: callback });
-    }
-  
     model['data'] = data;
     return model;
   }
@@ -202,9 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let stateIsIl = matches('state_s', 'IL');
     let stateIsWI = matches('state_s', 'WI');
     let wiOrIl = or(stateIsIl,stateIsWI);
-    
-    
-    
+    // ds.addFilter(wiOrIl); BOTH WORK, add filter or direct setting ds.data
+     ds.data = update([wiOrIl], ds.data);
     
     //console.log(ds.data);
 
@@ -332,12 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }]
       }
     });
-
-    ds.bindChart(categories, () => console.log('boe'));
-    ds.bindChart(map, () => console.log('boe'));
-
-    // ds.addFilter(wiOrIl); BOTH WORK, add filter or direct setting ds.data
-    ds.data = update([wiOrIl], ds.data);
 
   } // setupDataViz
 
