@@ -111,6 +111,10 @@ function Datasource(data) {
       let v = b.callback ? b.callback(val) : val;
       b.elem[b.prop] = v;
     });
+    
+    // update views with new data
+    views.forEach((view)=> view.data = val);
+
     value = val;
   }
 
@@ -187,7 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //mapData.addBinding() // add chart, so chart updates on data change
 
-
+    ds.addView(mapData);
+    ds.setFilter(stateIsWI);
     //ds.setFilter(wiOrIl); //BOTH WORK, add filter or direct setting ds.data
     //ds.data = update([wiOrIl], ds.data);
     //console.log('added filter')
