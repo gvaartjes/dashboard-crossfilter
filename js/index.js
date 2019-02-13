@@ -58,10 +58,7 @@ let arr2 = update(filters, arr1)
  *         this works as a count
  */
 
-const groupBy = (prop, sumProp) => { // chnage this to return function that 
-  //groups per industy which can be fired upon an array. Later to be concatenated 
-  // with something that the prop that needs to be summed. Like revenue.
-  // select (count(x), sum(x.revenue)) from data group by x.industry 
+const groupBy = (prop, sumProp) => { 
   return (arr) => {
     let obj = {}
     arr.forEach((x) => {
@@ -132,13 +129,14 @@ function Datasource(data) {
     set: this.setter
   })
 
+  /* TODO: NOT USED
   model.getFilter = function () {
     return this.filter;
   }
 
   model.getGroup = function () {
     return this.group;
-  }
+  }*/
 
   // TODO: if prop isn't set then apply callback
   // TODO: unused method in demo
@@ -198,10 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
     //ds.setFilter(stateIsWI);
 
     let groupByIndustry = groupBy('industry');
-    let industryData = new Datasource(ds.data)
+    let industryDatasource = new Datasource(ds.data)
       .setGrouping(groupByIndustry);
     // function setting series.setData
-    ds.addView(industryData);
+    ds.addView(industryDatasource);
     //let groupByIndustryData = groupByIndustry(ds.data);
     //ds.setGrouping(groupByIndustry);
 
@@ -220,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mapData.setGrouping(groupingMap);
         
         let groupingIndustry = groupBy('industry', e.target.value === 'count' ? undefined : e.target.value)
-        industryData.setGrouping(groupingIndustry);
+        industryDatasource.setGrouping(groupingIndustry);
       }));
 
     //let softwarePred = matches('industry', 'Software');
@@ -234,11 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
         text: 'Industries'
       },
       xAxis: {
-        categories: Object.keys(industryData.data)
+        categories: Object.keys(industryDatasource.data)
       },
       series: [{
         type: 'column',
-        data: Object.values(industryData.data)
+        data: Object.values(industryDatasource.data)
       }]
     })
     // map
@@ -273,26 +271,18 @@ document.addEventListener('DOMContentLoaded', () => {
             hover: {
               color: "#EEDD66"
             }
-          },
-          events: {
-            click: function () {
-              console.log(arguments)
-            }
           }
         }
       },
-
       series: [
         {
           allowPointSelect: true,
           point: {
             events: {
               select: function () {
-                console.log(this,  'was last selected');
                 let stateFilter = matches('state_s', this["hc-key"]);
-                //industryData.setFilter(stateFilter);
-                debugger
-                ds.setFilter(stateFilter);
+                industryDatasource.setFilter(stateFilter);
+                //ds.setFilter(stateFilter);
               }
             }
           },
@@ -349,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // bind map
     mapData.bindViz((d) => map.series[0].setData(toHighmapsFormat(d)));
     // bind industry column chart
-    industryData.bindViz((d) => {
+    industryDatasource.bindViz((d) => {
       categories.axes[0].setCategories(Object.keys(d))
       categories.series[0].setData(Object.values(d));
     })
