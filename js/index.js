@@ -190,30 +190,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let ds = new Datasource(data);
 
-    //let stateIsIl = matches('state_s', 'IL');
-    //let stateIsWI = matches('state_s', 'WI');
-    //let wiOrIl = or(stateIsIl, stateIsWI);
-
     let mapData = new Datasource(ds.data)
-      //.setFilter(wiOrIl)
       .setGrouping(groupBy('state_s', 'growth'));
     ds.addView(mapData);
-    //ds.setFilter(stateIsWI);
+ 
 
     let groupByIndustry = groupBy('industry');
     let industryDatasource = new Datasource(ds.data)
       .setGrouping(groupByIndustry);
-    // function setting series.setData
+ 
     ds.addView(industryDatasource);
-    //let groupByIndustryData = groupByIndustry(ds.data);
-    //ds.setGrouping(groupByIndustry);
 
     let mapDataByState = toHighmapsFormat(mapData.data);
-
-    // console.log(mapDataByState);
-    // let groupByIndustry = groupBy(data,'industry', 'revenue');
-    // console.log(groupByIndustry);
-    // built industry predicate first
 
     // set toggle for the group by
     // TODO: these are removed when we do a map point select?
@@ -225,11 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let groupingIndustry = groupBy('industry', e.target.value === 'count' ? undefined : e.target.value)
         industryDatasource.setGrouping(groupingIndustry);
       }));
-
-    //let softwarePred = matches('industry', 'Software');
-    //let statePred = matches('state_l', 'Wisconsin');
-    //let softwareInWisconsin = and(softwarePred, statePred);
-    //console.log(data.filter(softwareInWisconsin));
 
     // column chart
     let categories = Highcharts.chart('column', {
@@ -395,15 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
 var formInput = document.getElementById("inp");
 
 
-
-
-//let t1 = datasource([0,1,2])
 let t2 = new Datasource(10)
 
-//console.log('t1', t1.hello())
-//console.log('t2', t2.hello())
-
-//t1.data = [0,1,3];
 t2.data = 1;
 let input1 = document.getElementById("myText1");
 let input2 = document.getElementById("myText2");
