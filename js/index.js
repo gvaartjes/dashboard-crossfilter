@@ -58,11 +58,16 @@ let arr2 = update(filters, arr1)
  *         this works as a count
  */
 
-const groupBy = (prop, sumProp) => { 
+/**
+ * 
+ * @param {*} groupBy is the property to group by
+ * @param {*} sumArray extra properties to sum(x), if undefined then count()
+ */
+const groupBy = (groupBy, sumProp) => {
   return (arr) => {
     let obj = {}
     arr.forEach((x) => {
-      let v = x[prop];
+      let v = x[groupBy];
       // count occurences when there´s no sumProp
       let s = x[sumProp] || 1;
       v && obj[v] ? obj[v] = obj[v] + s : obj[v] = s;
@@ -167,7 +172,7 @@ function Datasource(data) {
   model.setGrouping = function (grouping) {
     this.group = grouping;
     // force setting data, with base data
-    self.setter(baseData)
+    self.setter(baseData);
     return this;
   }
 
@@ -216,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
       (x) => x.addEventListener('change', (e) => {
         let groupingMap = groupBy('state_s', e.target.value === 'count' ? undefined : e.target.value)
         mapData.setGrouping(groupingMap);
-        
+
         let groupingIndustry = groupBy('industry', e.target.value === 'count' ? undefined : e.target.value)
         industryDatasource.setGrouping(groupingIndustry);
       }));
@@ -235,6 +240,24 @@ document.addEventListener('DOMContentLoaded', () => {
         categories: Object.keys(industryDatasource.data)
       },
       series: [{
+        allowPointSelect: true,
+        point: {
+          events: {
+            click: function () {
+              // can't use the unselect event for resetting filter, because the unselect 
+              // fires after the select/click event. This would reset the filter again in
+              // case of selecting another point
+              let deselect = this.series.chart.getSelectedPoints().reduce(
+                (acc, curr) => acc || curr.category === this.category
+                , false
+              );
+              
+              const industryFilter = matches('industry', this.category);
+              mapData.setFilter(deselect ? undefined : industryFilter);
+              map.title.update({text: (deselect ? 'Industries in the U.S.' : this.category + ' in the U.S.')});           
+            }
+          }
+        },
         type: 'column',
         data: Object.values(industryDatasource.data)
       }]
@@ -282,7 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
               select: function () {
                 let stateFilter = matches('state_s', this["hc-key"]);
                 industryDatasource.setFilter(stateFilter);
-                //ds.setFilter(stateFilter);
+                categories.title.update({ text: 'Industries in ' + this["hc-key"] });
+              },
+              unselect: function () {
+                industryDatasource.setFilter();
+                categories.title.update({ text: 'Industries in US' });
               }
             }
           },
