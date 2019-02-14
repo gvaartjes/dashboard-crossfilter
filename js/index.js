@@ -241,6 +241,16 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       series: [{
         allowPointSelect: true,
+        states: {
+          hover: {
+            color: '#a4edba'
+          },
+          select: {
+            color: '#EFFFEF',
+            borderColor: 'black',
+            dashStyle: 'dot'
+          }
+        },
         point: {
           events: {
             click: function () {
@@ -251,10 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 (acc, curr) => acc || curr.category === this.category
                 , false
               );
-              
-              const industryFilter = matches('industry', this.category);
+              let industryFilter = matches('industry', this.category);
               mapData.setFilter(deselect ? undefined : industryFilter);
-              map.title.update({text: (deselect ? 'Industries in the U.S.' : this.category + ' in the U.S.')});           
+              map.title.update({ text: (deselect ? 'Industries in the U.S.' : this.category + ' in the U.S.') });
             }
           }
         },
@@ -300,16 +309,27 @@ document.addEventListener('DOMContentLoaded', () => {
       series: [
         {
           allowPointSelect: true,
+          states: {
+            hover: {
+              color: '#a4edba'
+            },
+            select: {
+              color: '#EFFFEF',
+              borderColor: 'black',
+              dashStyle: 'dot'
+            }
+          },
           point: {
             events: {
-              select: function () {
-                let stateFilter = matches('state_s', this["hc-key"]);
-                industryDatasource.setFilter(stateFilter);
-                categories.title.update({ text: 'Industries in ' + this["hc-key"] });
-              },
-              unselect: function () {
-                industryDatasource.setFilter();
-                categories.title.update({ text: 'Industries in US' });
+              click: function () {
+                let deselect = this.series.chart.getSelectedPoints().reduce(
+                  (acc, curr) => acc || curr['hc-key'] === this['hc-key']
+                  , false
+                );
+                console.log(deselect, this['hc-key'], this)
+                let stateFilter = matches('state_s', this['hc-key']);
+                industryDatasource.setFilter(deselect ? undefined : stateFilter);
+                categories.title.update({ text: 'Industries in ' + (deselect ? 'the U.S.' : this['hc-key']) });
               }
             }
           },
@@ -331,21 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       ],
-
-      drilldown: {
-        activeDataLabelStyle: {
-          color: "#FFFFFF",
-          textDecoration: "none",
-          textOutline: "1px #000000"
-        },
-        drillUpButton: {
-          relativeTo: "spacingBox",
-          position: {
-            x: 0,
-            y: 60
-          }
-        }
-      },
       responsive: {
         rules: [{
           condition: {
