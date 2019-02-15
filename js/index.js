@@ -119,6 +119,7 @@ function Datasource(data) {
     // update views with new data
     views.forEach((view) => view.data = val);
 
+    // update charts with new data
     vizs.forEach((viz) => viz(val))
 
     value = val;
@@ -133,15 +134,6 @@ function Datasource(data) {
     get: this.getter,
     set: this.setter
   })
-
-  /* TODO: NOT USED
-  model.getFilter = function () {
-    return this.filter;
-  }
-
-  model.getGroup = function () {
-    return this.group;
-  }*/
 
   // TODO: if prop isn't set then apply callback
   // TODO: unused method in demo
@@ -189,16 +181,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const setupDataViz = (data) => {
 
     let ds = new Datasource(data);
+    
+    let slider = document.getElementById('workers');
+    let max = data.reduce((acc, cur) => cur.rank > acc ? acc = cur.rank: acc, 0)
+    slider.max = max;
+    slider.value = max;
+    //slider.min = data.reduce((acc, cur) => cur.workers < acc ? acc = cur.workers: acc, slider.max)
+    
+    slider.addEventListener("input", (e) =>{
+      console.log(e.target.value);
+      //debugger
+      document.getElementById("workerLabel").innerHTML= (e.target.value);
+      ds.setFilter((x) => x.rank < (e.target.value));
+    })
 
     let mapData = new Datasource(ds.data)
       .setGrouping(groupBy('state_s', 'growth'));
-    ds.addView(mapData);
- 
 
     let groupByIndustry = groupBy('industry');
     let industryDatasource = new Datasource(ds.data)
       .setGrouping(groupByIndustry);
- 
+
+    // bind two new datasources to the master datasource 
+    // TODO: Could use concepts of linked datasets as property to eachother?
+    ds.addView(mapData);
     ds.addView(industryDatasource);
 
     let mapDataByState = toHighmapsFormat(mapData.data);
