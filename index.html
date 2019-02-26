@@ -1,14 +1,15 @@
 <html>
 
 <head>
-  <title>Highcharts</title>
+  <title>Inc 5000, crossfilter example</title>
   <link rel="stylesheet" href="/css/style.css">
   
   <script type="application/json" src=/js/inc5000-2018.json> </script> </head>
     <body>
-  <h1>Highcharts</h1>
+  <h1>Inc 5000, crossfilter example</h1>
   <div id="container">
     <div id="map"></div>
+  <div class="controls">
     <div>
       <input type="radio" id="count" name="selector" value="count"
              checked>
@@ -22,17 +23,21 @@
       <input type="radio" id="growth" name="selector" value="growth">
       <label for="growth">Growth</label>
     </div>  
-    <div>
+    <div class="slider-wrapper">
       <input type="range" id="workers" name="slid" 
-             min="0" max="100" value="0" >
+             min="0" max="100" value="0" width="100%">
       <label id="workerLabel" for="slid">Nr. of workers</label>
     </div>
+  </div>
+    
     <div id="column"></div>
   </div>
 
   <script src="/js/index.js"></script>
+  
   <script type="application/javascript" src="https://code.highcharts.com/7/highcharts.js"></script>
   <script type="application/javascript" src="https://code.highcharts.com/maps/7/modules/map.js"></script>
+  <script type="application/javascript" src="https://code.highcharts.com/themes/dark-unica.src.js"></script>
   <script src="https://code.highcharts.com/mapdata/countries/us/us-all.js"></script>
 
 

@@ -178,6 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // column chart
     let industriesChart = Highcharts.chart('column', {
+      chart: {
+        borderColor: 'orange',
+        borderWidth: 1
+      },
       title: {
         text: 'Industries'
       },
@@ -186,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       series: [{
         allowPointSelect: true,
+        colorByPoint:  true,
         states: {
           hover: {
             color: '#a4edba'
@@ -216,12 +221,14 @@ document.addEventListener('DOMContentLoaded', () => {
         data: Object.values(industryDatasource.data)
       }]
     })
+
     // map
     let usaMap = Highcharts.mapChart("map", {
 
       chart: {
         map: 'countries/us/us-all',
-        borderWidth: 1
+        borderWidth: 1,
+        borderColor: 'orange'
       },
       legend: {
         layout: "vertical",
