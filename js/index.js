@@ -1,41 +1,18 @@
+/**
+ * Copyright (C) 2019 Gert Vaartjes 
+ */
+
 'use strict';
 /*global Highcharts*/
-
-// data from https://data.world/aurielle/inc-5000-2018/workspace/file?filename=inc5000-2018.csv
 
 const asyncFetch = async (url) => {
   let response = await fetch(url)
   return (response.ok) ? await response.json() : { msg: 'error fetching' }
 };
 
-let arr1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-const gt = (nr) => {
-  return elem => elem > nr;
-}
-
-const lt = (nr) => {
-  return elem => elem < nr;
-}
-
-const between = (nr1, nr2) => {
-  return elem => elem > nr1 && elem < nr2;
-}
-
 const matches = (prop, val) => {
   return x => x[prop] && x[prop] === val;
 }
-
-const and = (f1, f2) => {
-  return (x) => f1(x) && f2(x);
-}
-
-const or = (f1, f2) => (x) => f1(x) || f2(x);
-
-let gt4 = gt(4)
-let between4and8 = between(4, 8)
-
-let filters = [gt4, between4and8];
 
 /**
  * 
@@ -50,8 +27,6 @@ const update = (preds, arr) => {
   return res;
 }
 
-let arr2 = update(filters, arr1)
-
 /**
  * 
  * @param {Array} arr - Array of Objects
@@ -62,8 +37,8 @@ let arr2 = update(filters, arr1)
 
 /**
  * 
- * @param {*} groupBy is the property to group by
- * @param {*} sumArray extra properties to sum(x), if undefined then count()
+ * @param {String} groupBy, is the property to group by
+ * @param {String} sum, extra property to sum(x), if undefined then do a count(x)
  */
 const groupBy = (groupBy, sumProp) => {
   return (arr) => {
@@ -78,6 +53,10 @@ const groupBy = (groupBy, sumProp) => {
   }
 }
 
+/**
+ * 
+ * @param {*} obj, convenience function to output dataformat recognized by Highmaps
+ */
 const toHighmapsFormat = (obj) => {
   let arr = []
   Object.entries(obj).forEach(x => {
@@ -110,14 +89,6 @@ function Datasource(data) {
     // apply group by a field 
     val = model.group ? model.group(val) : val;
 
-    // update bindings; 
-    //TODO: is it setting also the element that triggert the update?
-    bindings.forEach((b) => {
-      // if supplied run callback on val parameter
-      let v = b.callback ? b.callback(val) : val;
-      b.elem[b.prop] = v;
-    });
-
     // update views with new data
     views.forEach((view) => view.data = val);
 
@@ -128,7 +99,6 @@ function Datasource(data) {
   }
 
   this.getter = function () {
-    console.log('this', this, this.filter)
     return value;
   }
 
@@ -136,17 +106,6 @@ function Datasource(data) {
     get: this.getter,
     set: this.setter
   })
-
-  // TODO: if prop isn't set then apply callback
-  // TODO: unused method in demo
-  model.addBinding = function (element, prop, eventType, callback) {
-    element.addEventListener(eventType, function () {
-      self.setter(element[prop])
-    })
-    bindings.push({ elem: element, prop: prop, callback: callback });
-    element[prop] = value;
-    return this;
-  }
 
   model.bindViz = function (updateViz) {
     vizs.push(updateViz);
@@ -170,7 +129,7 @@ function Datasource(data) {
     return this;
   }
 
-  model['data'] = data;
+  model.data = data;
   return model;
 }
 
@@ -182,34 +141,29 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const setupDataViz = (data) => {
 
-    let ds = new Datasource(data);
+    let ds = new Datasource(data),
+    mapData = new Datasource(ds.data)
+      .setGrouping(groupBy('state_s', 'growth')), 
+    groupByIndustry = groupBy('industry'),
+    industryDatasource = new Datasource(ds.data)
+      .setGrouping(groupByIndustry),
+    slider = document.getElementById('workers'),
+    max = data.reduce((acc, cur) => cur.rank > acc ? acc = cur.rank: acc, 0),
+    mapDataByState = toHighmapsFormat(mapData.data);
+
+    // bind two new datasources to the master datasource 
+    ds.addView(mapData);
+    ds.addView(industryDatasource);    
     
-    let slider = document.getElementById('workers');
-    let max = data.reduce((acc, cur) => cur.rank > acc ? acc = cur.rank: acc, 0)
+    // set slider element to max, which means no filtering with start  
     slider.max = max;
     slider.value = max;
-    //slider.min = data.reduce((acc, cur) => cur.workers < acc ? acc = cur.workers: acc, slider.max)
-    
+   
     slider.addEventListener("input", (e) =>{
-      console.log(e.target.value);
-      //debugger
       document.getElementById("workerLabel").innerHTML= (e.target.value);
       ds.setFilter((x) => x.rank < (e.target.value));
     })
-
-    let mapData = new Datasource(ds.data)
-      .setGrouping(groupBy('state_s', 'growth'));
-
-    let groupByIndustry = groupBy('industry');
-    let industryDatasource = new Datasource(ds.data)
-      .setGrouping(groupByIndustry);
-
-    // bind two new datasources to the master datasource 
-    // TODO: Could use concepts of linked datasets as property to eachother?
-    ds.addView(mapData);
-    ds.addView(industryDatasource);
-
-    let mapDataByState = toHighmapsFormat(mapData.data);
+   
 
     // set toggle for the group by
     // TODO: these are removed when we do a map point select?
@@ -223,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
 
     // column chart
-    let categories = Highcharts.chart('column', {
+    let industriesChart = Highcharts.chart('column', {
       title: {
         text: 'Industries'
       },
@@ -254,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
               );
               let industryFilter = matches('industry', this.category);
               mapData.setFilter(deselect ? undefined : industryFilter);
-              map.title.update({ text: (deselect ? 'Industries in the U.S.' : this.category + ' in the U.S.') });
+              usaMap.title.update({ text: (deselect ? 'Industries in the U.S.' : this.category + ' in the U.S.') });
             }
           }
         },
@@ -263,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }]
     })
     // map
-    let map = Highcharts.mapChart("map", {
+    let usaMap = Highcharts.mapChart("map", {
 
       chart: {
         map: 'countries/us/us-all',
@@ -273,6 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "vertical",
         align: "right",
         verticalAlign: "middle"
+      },
+      title: {
+        text: 'USA'
       },
 
       colorAxis: {
@@ -317,10 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
                   (acc, curr) => acc || curr['hc-key'] === this['hc-key']
                   , false
                 );
-                console.log(deselect, this['hc-key'], this)
+                
                 let stateFilter = matches('state_s', this['hc-key']);
                 industryDatasource.setFilter(deselect ? undefined : stateFilter);
-                categories.title.update({ text: 'Industries in ' + (deselect ? 'the U.S.' : this['hc-key']) });
+                industriesChart.title.update({ text: 'Industries in ' + (deselect ? 'the U.S.' : this['hc-key']) });
               }
             }
           },
@@ -360,45 +317,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // bind charts, works only with one series per chart and one
     // bind map
-    mapData.bindViz((d) => map.series[0].setData(toHighmapsFormat(d)));
+    mapData.bindViz((d) => usaMap.series[0].setData(toHighmapsFormat(d)));
     // bind industry column chart
     industryDatasource.bindViz((d) => {
-      categories.axes[0].setCategories(Object.keys(d))
-      categories.series[0].setData(Object.values(d));
+      industriesChart.axes[0].setCategories(Object.keys(d))
+      industriesChart.series[0].setData(Object.values(d));
     })
-
-  } // setupDataViz
-
-  /*var groupBy = function(xs, key) {
-    return xs.reduce(function(rv, x) {
-      (rv[x[key]] = rv[x[key]] || []).push(x);
-      return rv;
-    }, {});
-  };*/
+  }
 
   asyncFetch('/js/inc5000-2018.json')
     .then((d) => setupDataViz(d))
     .catch((err) => console.log(err));
 
 }, false);
-
-
-var formInput = document.getElementById("inp");
-
-
-let t2 = new Datasource(10)
-
-t2.data = 1;
-let input1 = document.getElementById("myText1");
-let input2 = document.getElementById("myText2");
-let inputStart = document.getElementById("start");
-let inputCow = document.getElementById("cowbell");
-
-t2.addBinding(input1, 'value', 'keyup')
-  .addBinding(input2, 'value', 'keyup')
-  .addBinding(inputStart, 'value', "input")
-  .addBinding(inputCow, 'value', "input", function (val) {
-    return val / 5;
-  });
-
-
