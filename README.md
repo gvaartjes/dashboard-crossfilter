@@ -1,6 +1,6 @@
-# highcharts-cloud-charts-selector
-A dropdown selector for showing multiple charts one by one, served from Highcharts Cloud 
+# dashboard-crossfilter
+proof of concept for a dashboard with crossfilter logic
 
 # Installation
 1. `npm install`
-2. `npm start`
+2. `npm start` starts up a local web server fro debugging
