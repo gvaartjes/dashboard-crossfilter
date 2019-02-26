@@ -1,6 +1,8 @@
 'use strict';
 /*global Highcharts*/
 
+// data from https://data.world/aurielle/inc-5000-2018/workspace/file?filename=inc5000-2018.csv
+
 const asyncFetch = async (url) => {
   let response = await fetch(url)
   return (response.ok) ? await response.json() : { msg: 'error fetching' }
